@@ -6,6 +6,14 @@
 
 Tested with Docker Desktop on Windows
 
+Commands:  
+```bash
+docker compose config
+docker compose build
+docker compose up
+docker compose ps
+```
+
 The API is available at:
 
 ```text
@@ -174,3 +182,6 @@ For ORM, Prisma was selected to provide:
 Prisma 7 is specified since the latest version 8 doesn't support MySQL yet.
 
 Overall, it reduces query boilerplate and improves type safety.
+
+## Sequence diagram
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/2e226c18-8671-45f4-b90b-15187911b6a5" />
