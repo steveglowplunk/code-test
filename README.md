@@ -112,8 +112,6 @@ curl -X POST http://localhost:3000/user \
   -d "{\"id1\":\"ABC123\",\"id2\":\"XYZ456\"}"
 ```
 
-The Swagger UI can be used to inspect and execute `POST /user`.
-
 ## Testing
 
 ### Unit tests
