@@ -3,6 +3,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UserService } from './user.service.js';
+import { Prisma } from '../generated/prisma/client.js';
 
 describe('UserService', () => {
   const dto = {
@@ -132,6 +133,41 @@ describe('UserService', () => {
     );
   });
 
+  it('returns the concurrently created user ID after a unique constraint conflict', async () => {
+    const concurrentUserID = '550e8400-e29b-41d4-a716-446655440000';
+
+    prisma.user_identities.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        user_id: concurrentUserID,
+      });
+
+    prisma.user_identities.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on id1 and id2',
+        {
+          code: 'P2002',
+          clientVersion: '7.10.0',
+          meta: {
+            modelName: 'user_identities',
+            target: ['id1', 'id2'],
+          },
+        },
+      ),
+    );
+
+    const result = await service.getOrCreateUserId(dto);
+
+    expect(result).toBe(concurrentUserID);
+    expect(prisma.user_identities.findUnique).toHaveBeenCalledTimes(2);
+
+    expect(cache.set).toHaveBeenCalledWith(
+      expect.stringMatching(/^user-identity:[a-f0-9]{64}$/),
+      concurrentUserID,
+      3_600_000,
+    );
+  });
+
   it('uses MySQL when the Redis read fails', async () => {
     cache.get.mockRejectedValue(new Error('Redis unavailable'));
 
@@ -168,4 +204,5 @@ describe('UserService', () => {
       ),
     );
   });
+
 });

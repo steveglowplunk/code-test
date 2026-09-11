@@ -65,6 +65,64 @@ describe('AppController (e2e)', () => {
       .expect(400);
   });
 
+  it.each([
+    ['leading whitespace', ' ABC123'],
+    ['trailing whitespace', 'ABC123 '],
+    ['internal whitespace', 'ABC 123'],
+    ['whitespace only', '   '],
+  ])('rejects id1 with %s', async (_, id1) => {
+    await request(app.getHttpServer())
+      .post('/user')
+      .send({
+        id1,
+        id2: 'XYZ456',
+      })
+      .expect(400);
+  });
+
+  it('returns one userID for concurrent requests with the same identifiers', async () => {
+    const prisma = app.get(PrismaService);
+
+    const body = {
+      id1: `concurrent-${randomUUID()}`,
+      id2: `concurrent-${randomUUID()}`,
+    };
+
+    try {
+      const responses = await Promise.all(
+        Array.from({ length: 10 }, () =>
+          request(app.getHttpServer())
+            .post('/user')
+            .send(body),
+        ),
+      );
+
+      expect(responses.every((response) => response.status === 201)).toBe(true);
+
+      const userIDs = responses.map((response) => response.body.userID);
+
+      expect(userIDs).toHaveLength(10);
+      expect(userIDs.every((userID) => typeof userID === 'string')).toBe(true);
+      expect(new Set(userIDs).size).toBe(1);
+
+      const records = await prisma.user_identities.count({
+        where: {
+          id1: body.id1,
+          id2: body.id2,
+        },
+      });
+
+      expect(records).toBe(1);
+    } finally {
+      await prisma.user_identities.deleteMany({
+        where: {
+          id1: body.id1,
+          id2: body.id2,
+        },
+      });
+    }
+  });
+
   it('returns the same userID for repeated identity requests', async () => {
     const prisma = app.get(PrismaService);
 
