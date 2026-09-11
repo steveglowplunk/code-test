@@ -6,6 +6,14 @@
 
 Tested with Docker Desktop on Windows
 
+Commands:  
+```bash
+docker compose config
+docker compose build
+docker compose up
+docker compose ps
+```
+
 The API is available at:
 
 ```text
