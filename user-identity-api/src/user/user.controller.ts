@@ -7,8 +7,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
 	@Post()
-	async getOrCreateUserId (@Body() dto: GetOrCreateUserIdDto): Promise<{ userId: string }> {
-		const userId = await this.userService.getOrCreateUserId(dto);
-		return { userId };
+	async getOrCreateUserId (@Body() dto: GetOrCreateUserIdDto): Promise<{ userID: string }> {
+		const userID = await this.userService.getOrCreateUserId(dto);
+		return { userID };
 	}
 }
