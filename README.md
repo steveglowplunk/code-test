@@ -32,23 +32,13 @@ The generated OpenAPI JSON document is available at:
 http://localhost:3000/docs/openapi.json
 ```
 
-### Local application setup
+## Local application setup
 
-To run the NestJS application outside Docker, install:
+To run the NestJS application outside Docker, clone the repository and install the dependencies:
 
+Environment:  
 - Node.js 24
 - npm
-
-Start MySQL 8 and latest Redis through Docker.  
-Add environment variables and ports for MySQL.  
-Example:  
-```
-docker run --name mysql-standalone -e MYSQL_ROOT_PASSWORD=change_root_password -p 3306:3306 -d mysql:latest
-```
-
-## Installation
-
-Clone the repository and install the dependencies:
 
 ```bash
 git clone <repository-url>
@@ -62,7 +52,12 @@ Generate the Prisma client:
 npx prisma generate --config prisma7.config.ts
 ```
 
-## Environment configuration
+Start MySQL 8 and latest Redis through Docker.  
+Add environment variables and ports for MySQL.  
+Example:  
+```
+docker run --name mysql-standalone -e MYSQL_ROOT_PASSWORD=change_root_password -p 3306:3306 -d mysql:latest
+```
 
 Copy the environment example:
 
@@ -70,17 +65,9 @@ Copy the environment example:
 cp .env.example .env
 ```
 
-## Starting with Docker Compose
+Configure .env with MySQL root password defined earlier.  
 
-Build and start the API, MySQL, Redis, and database initialization services:
-
-```bash
-docker compose up --build
-```
-
-## Running the API locally
-
-Start the NestJS application in watch mode:
+Finally, start the NestJS application in watch mode:
 
 ```bash
 npm run start:dev
@@ -129,6 +116,23 @@ curl -X POST http://localhost:3000/user \
 
 The Swagger UI can be used to inspect and execute `POST /user`.
 
+## Testing
+
+### Unit tests
+
+```bash
+npm test
+```
+
+### End-to-end tests
+
+End-to-end tests require MySQL and Redis running:
+
+```bash
+docker compose up -d mysql redis
+npm run test:e2e
+```
+
 ## Redis caching
 
 Redis is used as cache for user identity lookups.
@@ -154,23 +158,6 @@ If two requests for the same new combination arrive concurrently:
 3. The other request receives a Prisma `P2002` unique constraint error.
 4. The application detects that error and reads the record created by the successful request.
 5. Both requests return the same `userID`.
-
-## Testing
-
-### Unit tests
-
-```bash
-npm test
-```
-
-### End-to-end tests
-
-End-to-end tests require MySQL and Redis:
-
-```bash
-docker compose up -d mysql redis
-npm run test:e2e
-```
 
 ## Important technical decisions
 
