@@ -1,38 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { GetOrCreateUserIdDto } from './dto/create-user.dto.js';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class UserService {
-	private readonly dummyUsers = [
-		{
-			id1: 'ABC123',
-			id2: 'DEF456',
-			userId: 'random-stuff',
-		},
-		{
-			id1: 'GHI789',
-			id2: 'JKL012',
-			userId: 'random-stuff-2',
-		},
-	];
+	private readonly logger = new Logger(UserService.name);
 
-	getOrCreateUserId(dto: GetOrCreateUserIdDto): string {
-		const existingUser = this.dummyUsers.find((user) => 
-			user.id1 === dto.id1 && user.id2 === dto.id2
-		);
+	constructor(private readonly prisma: PrismaService) { }
 
-		if (existingUser) {
-			return existingUser.userId;
+	async getOrCreateUserId(dto: GetOrCreateUserIdDto): Promise<string> {
+		try {
+			const existingUser = await this.prisma.user_identities.findUnique({
+				where: {
+					id1_id2: {
+						id1: dto.id1,
+						id2: dto.id2
+					},
+				},
+				select: {
+					user_id: true
+				}
+			});
+
+			if (existingUser) {
+				return existingUser.user_id;
+			}
+
+			const userId = randomUUID();
+
+			const createdUser = await this.prisma.user_identities.create({
+				data: {
+					id1: dto.id1,
+					id2: dto.id2,
+					user_id: userId
+				},
+				select: {
+					user_id: true
+				}
+			});
+
+			return createdUser.user_id;
+		} catch (error: unknown) {
+			this.logger.error(
+				'Failed to get or create a user identity',
+				error instanceof Error ? error.stack : undefined,
+			);
+			throw new InternalServerErrorException(
+				'Unable to process the user identity request',
+			);
 		}
-
-		const userId = randomUUID();
-
-		this.dummyUsers.push({
-			...dto,
-			userId,
-		});
-
-		return userId;
 	}
 }
