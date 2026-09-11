@@ -1,7 +1,5 @@
 # User Identity API
 
-## Prerequisites
-
 ### Docker setup
 
 Tested with Docker Desktop on Windows
